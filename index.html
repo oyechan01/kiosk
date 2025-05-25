@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>카페 키오스크</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f8f8f8; }
+        .container { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .menu-item { margin-bottom: 10px; }
+        label { font-size: 18px; margin-right: 10px; }
+        input[type="number"] { width: 60px; padding: 5px; font-size: 16px; }
+        button { margin: 10px 0; padding: 10px; width: 100%; font-size: 16px; }
+        #paymentPage { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="menuPage">
+            <h1>☕ 카페 키오스크</h1>
+            <div id="menu"></div>
+            <button onclick="goToPayment()">🧾 주문하기</button>
+        </div>
+
+        <div id="paymentPage">
+            <h2>💳 결제 정보</h2>
+            <div id="orderSummary"></div>
+            <p id="totalPrice"></p>
+            <button onclick="submitOrder()">결제 완료</button>
+        </div>
+
+        <p id="orderResult">
+    </p>
+    <div style="text-align:center;">
+        <button onclick="goHome()" id="homeButton" style="display:none; font-size: 16px; padding: 10px 20px; margin-top: 10px;">🏠 홈으로</button>
+    </div>
+    </div>
+
+    <script>
+    function goHome() {
+        document.getElementById("menuPage").style.display = "block";
+        document.getElementById("paymentPage").style.display = "none";
+    document.getElementById("homeButton").style.display = "block";
+        document.getElementById("orderResult").textContent = "";
+        document.getElementById("homeButton").style.display = "none";
+
+        // 수량 입력 초기화
+        menuList.forEach(item => {
+            const input = document.getElementById("qty-" + item.id);
+            if (input) input.value = "0";
+        });
+    }
+    
+        let menuList = [];
+        let selectedItems = [];
+
+        async function fetchMenu() {
+            const res = await fetch('/menu');
+            const data = await res.json();
+            menuList = data.menu;
+            const menuDiv = document.getElementById('menu');
+            data.menu.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "menu-item";
+                div.innerHTML = 
+                    '<label>' + item.name + ' (' + item.price + '원)</label>' +
+                    '<input type="number" id="qty-' + item.id + '" value="0" min="0">';
+                menuDiv.appendChild(div);
+            });
+        }
+
+        function goToPayment() {
+            selectedItems = [];
+
+            menuList.forEach(item => {
+                const qty = parseInt(document.getElementById('qty-' + item.id).value);
+                if (qty > 0) {
+                    selectedItems.push({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: qty
+                    });
+                }
+            });
+
+            if (selectedItems.length === 0) {
+                alert("주문할 메뉴를 선택해주세요.");
+                return;
+            }
+
+            const summaryDiv = document.getElementById("orderSummary");
+            summaryDiv.innerHTML = "";
+            let total = 0;
+            selectedItems.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                const p = document.createElement("p");
+                p.textContent = item.name + " x " + item.quantity + "개 = " + itemTotal + "원";
+                summaryDiv.appendChild(p);
+            });
+            document.getElementById("totalPrice").textContent = "총 결제 금액: " + total + "원";
+
+            document.getElementById("menuPage").style.display = "none";
+            document.getElementById("paymentPage").style.display = "block";
+        }
+
+        async function submitOrder() {
+            const expandedItems = [];
+            selectedItems.forEach(item => {
+                for (let i = 0; i < item.quantity; i++) {
+                    expandedItems.push({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price
+                    });
+                }
+            });
+
+            const res = await fetch('/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: expandedItems })
+            });
+            const data = await res.json();
+            
+    const result = document.getElementById("orderResult");
+    const order = data.order;
+    let message = "🧾 주문이 완료되었습니다!\n";
+    order.items.forEach((item, index) => {
+        message += "- " + item.name + " x 1\n";
+    });
+    message += "총 결제금액: " + order.total.toLocaleString() + "원\n";
+    message += "주문번호: " + order.order_id;
+    result.textContent = message;
+    
+            document.getElementById("paymentPage").style.display = "none";
+    document.getElementById("homeButton").style.display = "block";
+        }
+
+        fetchMenu();
+    </script>
+</body>
+</html>
