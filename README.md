@@ -72,18 +72,20 @@ sequenceDiagram
 ## ⚙️ 실행 방법
 
 1. Flask 설치
+cmd에서 아래의 명령어 실행
 ```bash
 pip install flask
 ```
 
 2. 서버 실행
+파이썬 파일을 실행
 ```bash
 python kiosk_server.py
 ```
 3. 자동으로 브라우저가 열리며 키오스크 주문 시스템 실행됨
 
-4. 주의사항
+****주의사항****
 index와 python kiosk_server.py가 같은 폴더에 위치해야 실행됨
 웹브라우저가 실행되지 않는 경우에는 ctrl+c로 강제종료 후 다시 실행
 
-3. 자동으로 브라우저가 열리며 키오스크 주문 시스템 실행됨
+
